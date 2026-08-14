@@ -38,7 +38,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
 )
 
 # -----------------------
-# LinearAlgebra
+# LinearAlgebra.hpp
 # -----------------------
 
 add_library(LinearAlgebra INTERFACE)
