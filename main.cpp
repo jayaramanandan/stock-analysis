@@ -17,6 +17,14 @@ END_FUNCTOR
 
 BEGIN_PROGRAM
 
-LinearAlgebra::Matrix<2, float> matrix1(4, 5);
+    LinearAlgebra::Matrix<2, float> matrix1(4, 5);
+
+    matrix1.fill(
+        KOKKOS_LAMBDA(const int i, const int j) {
+            return static_cast<float>(i + j);
+        }
+    );
+
+    std::cout << matrix1.toString() << std::endl;
 
 END_PROGRAM

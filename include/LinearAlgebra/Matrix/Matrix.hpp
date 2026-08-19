@@ -2,6 +2,7 @@
 #define STOCK_ANALYSIS_MATRIX_HPP
 
 #include <array>
+#include <string>
 
 #include <Kokkos_Core.hpp>
 
@@ -26,6 +27,9 @@ namespace LinearAlgebra {
         Kokkos::View<MatrixTypePointer> m;
         std::array<std::size_t, Dimensions> shape;
 
+        template <typename KokkosFunction>
+        void iterateElements(KokkosFunction kokkosCallback) const;
+
         public:
         explicit Matrix(Kokkos::View<MatrixTypePointer> matrixView);
 
@@ -33,6 +37,11 @@ namespace LinearAlgebra {
         explicit Matrix(Shape... shape);
 
         Kokkos::View<MatrixTypePointer> getM() const;
+
+        [[nodiscard]] std::string toString() const;
+
+        template <typename KokkosFunction>
+        void fill(KokkosFunction fillFunction);
 
         /*
         [[nodiscard]] std::string to_string() const;
