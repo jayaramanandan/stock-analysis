@@ -51,23 +51,23 @@ namespace LinearAlgebra {
 
         if (lengthCopy != v2.extent(0)) {
             throw std::invalid_argument(
-                "Cannot perform operation on vectors of different lengths"
+                "Cannot perform operation on vectors of different lengths."
             );
         }
 
-        Kokkos::View<VectorType*> v_result("v_result Vector::operator+", lengthCopy);
+        Kokkos::View<VectorType*> vResult("v_result Vector::elementWiseOperation", lengthCopy);
 
         Kokkos::parallel_for(
             "LinearAlgebra::Vector::elementWiseOperation",
             lengthCopy,
             KOKKOS_LAMBDA(const int i) {
-                v_result(i) = mathOperation(v1(i), v2(i));
+                vResult(i) = mathOperation(v1(i), v2(i));
             }
         );
 
         Kokkos::fence("LinearAlgebra::Vector::elementWiseOperation");
 
-        return v_result;
+        return vResult;
     }
 
     template<typename VectorType>
@@ -79,7 +79,7 @@ namespace LinearAlgebra {
     ) const {
         const int lengthCopy = v1.extent(0);
 
-        Kokkos::View<VectorType*> v_result("v_result Vector::operator+", lengthCopy);
+        Kokkos::View<VectorType*> v_result("v_result Vector::elementWiseOperation", lengthCopy);
 
         Kokkos::parallel_for(
             "LinearAlgebra::Vector::elementWiseOperation",
@@ -101,7 +101,7 @@ namespace LinearAlgebra {
     ) const {
         const int lengthCopy = v2.extent(0);
 
-        Kokkos::View<VectorType*> v_result("v_result Vector::operator+", lengthCopy);
+        Kokkos::View<VectorType*> v_result("v_result Vector::elementWiseOperation", lengthCopy);
 
         Kokkos::parallel_for(
             "LinearAlgebra::Vector::elementWiseOperation",
@@ -134,7 +134,7 @@ namespace LinearAlgebra {
         auto vReference = this->v;
         const auto lengthCopy = this->length;
 
-        FillFunctor fillFunctor{};
+        const FillFunctor fillFunctor{};
 
         Kokkos::parallel_for(
             "LinearAlgebra::Vector::fill",
@@ -146,7 +146,7 @@ namespace LinearAlgebra {
     }
 
     template<typename VectorType>
-    VectorType Vector<VectorType>::operator[](const std::size_t index) const {
+    VectorType Vector<VectorType>::operator()(const std::size_t index) const {
         return this->v(index);
     }
 

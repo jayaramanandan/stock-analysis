@@ -3,5 +3,6 @@
 
 #include <LinearAlgebra/Macros.hpp>
 #include <LinearAlgebra/Vector/Vector.hpp>
+#include <LinearAlgebra/Matrix/Matrix.hpp>
 
 #endif

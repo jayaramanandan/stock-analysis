@@ -4,42 +4,19 @@
 
 #include <LinearAlgebra.hpp>
 
-FUNCTORIFY(
-    fill,
-    float,
-    (const int i) const {
-        return static_cast<float>(i);
-    }
-);
-
-int main(int argc, char* argv[]) {
-    Kokkos::initialize(argc, argv);
-
-    {
-        std::cout << "Execution space: " << Kokkos::DefaultExecutionSpace::name() << '\n';
-
-        LinearAlgebra::Vector<float> myVec1(5);
-        LinearAlgebra::Vector<float> myVec2(5);
-
-        myVec1.fill<fill>();
-        myVec2.fill<fill>();
-
-        std::cout << (myVec1 + myVec2).to_string() << std::endl;
-        std::cout << (myVec1 - myVec2).to_string() << std::endl;
-        std::cout << (myVec1 * myVec2).to_string() << std::endl;
-        std::cout << (myVec1 / myVec2).to_string() << std::endl;
-
-        std::cout << (myVec1 + 2.0f).to_string() << std::endl;
-        std::cout << (myVec1 - 2.0f).to_string() << std::endl;
-        std::cout << (myVec1 * 2.0f).to_string() << std::endl;
-        std::cout << (myVec1 / 2.0f).to_string() << std::endl;
-
-        std::cout << (2.0f + myVec1).to_string() << std::endl;
-
-        std::cout << (1.0f / myVec1).to_string() << std::endl;
-    }
-
-    Kokkos::finalize();
-
-    return 0;
+FUNCTOR(float, fillVector, (const int i)) {
+    return static_cast<float>(i);
 }
+END_FUNCTOR
+
+FUNCTOR(float, fillMatrix, (const int i, const int j)) {
+    return static_cast<float>(i + j);
+}
+END_FUNCTOR
+
+
+BEGIN_PROGRAM
+
+LinearAlgebra::Matrix<2, float> matrix1(4, 5);
+
+END_PROGRAM

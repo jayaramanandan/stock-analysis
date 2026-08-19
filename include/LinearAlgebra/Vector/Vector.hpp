@@ -10,7 +10,7 @@
 namespace LinearAlgebra {
     template <typename VectorType>
     class Vector {
-        int length;
+        const int length;
         Kokkos::View<VectorType*> v;
 
         public:
@@ -35,7 +35,7 @@ namespace LinearAlgebra {
         template<typename FillFunctor>
         void fill();
 
-        VectorType operator[](std::size_t index) const;
+        VectorType operator()(std::size_t index) const;
 
         Vector operator+(const Vector& otherVector) const;
 
