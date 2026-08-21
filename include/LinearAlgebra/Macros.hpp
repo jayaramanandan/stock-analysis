@@ -15,17 +15,8 @@ Kokkos::finalize(); \
 return 0; \
 }
 
-// Functor macros
+// Aliases
 
-namespace LinearAlgebra {
-    struct Functor {};
-}
-
-#define FUNCTOR(return_type, name, args) \
-struct name : LinearAlgebra::Functor { \
-    KOKKOS_FUNCTION \
-    return_type operator() args const \
-
-#define END_FUNCTOR };
+#define LAMBDA KOKKOS_LAMBDA
 
 #endif

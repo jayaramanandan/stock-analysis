@@ -1,38 +1,71 @@
 #ifndef STOCK_ANALYSIS_MATRIX_TPP
 #define STOCK_ANALYSIS_MATRIX_TPP
 
-#include <array>
-#include <utility>
 #include "Matrix.hpp"
 
+#include <array>
+#include <utility>
+
+#include "../Macros.hpp"
+#include "LinearAlgebra/MathOperation.hpp"
+
 namespace LinearAlgebra {
-    template<std::size_t... Indices, typename Function>
-    constexpr auto spreadFuncToArray(const std::index_sequence<Indices...>, const Function func) {
-        return std::array{
-            func(static_cast<int>(Indices))...
-        };
-    }
+    template <
+        std::size_t Dimensions,
+        typename MatrixType,
+        ValidMathOperation Operation,
+        typename OperandType1,
+        typename OperandType2
+    >
+    KokkosView<Dimensions, MatrixType> applyMathsOperation(OperandType1 op1, OperandType2 op2) {
+        OperationApplier<Dimensions, MatrixType, Operation, OperandType1, OperandType2> operationApplier;
+        KokkosView<Dimensions, MatrixType> matrix;
 
-    template <std::size_t Length, typename Function>
-    constexpr auto spreadFuncToArray(const Function func) {
-        return spreadFuncToArray(std::make_index_sequence<Length>{}, func);
-    }
+        if constexpr (std::is_same_v<OperandType1, KokkosView<Dimensions, MatrixType>>) {
+            matrix = op1;
+        } else {
+            matrix = op2;
+        }
 
-    template<std::size_t... Indices, typename Function, std::size_t Length, typename ArrayType>
-    constexpr auto spreadArrayToFunc(const Function func, std::array<ArrayType, Length>& array, std::index_sequence<Indices...>) {
-        return func(array[Indices]...);
-    }
+        if constexpr (Dimensions == 1) {
+            KokkosView<Dimensions, MatrixType> result("LinearAlgebra::Matrix::applyMathsOperation::result", matrix.extent(0));
 
-    template<typename Function, std::size_t Length, typename ArrayType>
-    constexpr auto spreadArrayToFunc(const Function func, std::array<ArrayType, Length>& array) {
-        return spreadArrayToFunc(func, array, std::make_index_sequence<Length>{});
+            Kokkos::parallel_for(
+                "LinearAlgebra::Matrix::iterateElements",
+                matrix.extent(0),
+                LAMBDA(const int i) {
+                    result(i) = operationApplier(op1, op2, i);
+                }
+            );
+
+            return result;
+        } else {
+            KokkosView<Dimensions, MatrixType> result("LinearAlgebra::Matrix::applyMathsOperation::result", matrix.extent(0), matrix.extent(1));
+
+            Kokkos::parallel_for(
+                "LinearAlgebra::Matrix::iterateElements",
+                Kokkos::MDRangePolicy<Kokkos::Rank<Dimensions>>(
+                    {0, 0},
+                    {matrix.extent(0), matrix.extent(1)}
+                ),
+                LAMBDA(const int i, const int j) {
+                    result(i, j) = operationApplier(op1, op2, i, j);
+                }
+            );
+
+            return result;
+        }
     }
 
     template<std::size_t Dimensions, typename MatrixType>
-    Matrix<Dimensions, MatrixType>::Matrix(Kokkos::View<MatrixTypePointer> matrixView):
-    m(matrixView),
-    shape(spreadFuncToArray(Dimensions, matrixView.extent))
-    {}
+    Matrix<Dimensions, MatrixType>::Matrix(Kokkos::View<MatrixTypePointer> matrixView): m(matrixView) {
+        if constexpr (Dimensions == 1) {
+            this->shape[0] = matrixView.extent(0);
+        } else {
+            this->shape[0] = matrixView.extent(0);
+            this->shape[1] = matrixView.extent(1);
+        }
+    }
 
     template<std::size_t Dimensions, typename MatrixType>
     template<typename... Shape>
@@ -52,11 +85,6 @@ namespace LinearAlgebra {
 
     template<std::size_t Dimensions, typename MatrixType>
     std::string Matrix<Dimensions, MatrixType>::toString() const {
-        static_assert(
-            Dimensions == 1 || Dimensions == 2,
-            "Dimensions must be 1 or 2."
-        );
-
         auto hostM = Kokkos::create_mirror_view(this->m);
         Kokkos::deep_copy(hostM, this->m);
 
@@ -66,10 +94,18 @@ namespace LinearAlgebra {
             outputString += '\t';
 
             if constexpr (Dimensions == 1) {
-                outputString += std::to_string(hostM(i)) + ", ";
+                outputString += std::to_string(hostM(i));
+
+                if (i != this->shape[0] - 1) {
+                    outputString += ", ";
+                }
             } else {
                 for (std::size_t j = 0; j < this->shape[1]; j++) {
-                    outputString += std::to_string(hostM(i, j)) + ", ";
+                    outputString += std::to_string(hostM(i, j));
+
+                    if (i != this->shape[0] - 1 || j != this->shape[1] - 1) {
+                        outputString += ", ";
+                    }
                 }
             }
 
@@ -85,23 +121,130 @@ namespace LinearAlgebra {
     template <typename KokkosFunction>
     void Matrix<Dimensions, MatrixType>::iterateElements(const KokkosFunction kokkosCallback) const {
         const auto shapeCopy = this->shape;
-        Kokkos::parallel_for(
-            "LinearAlgebra::Matrix::iterateElements",
-            Kokkos::MDRangePolicy(
-                std::array<std::size_t, Dimensions>{},
-                shape
-            ),
-            kokkosCallback
-        );
+        auto mCopy = this->m;
+
+        if constexpr (Dimensions == 1) {
+            Kokkos::parallel_for(
+                "LinearAlgebra::Matrix::iterateElements",
+                shapeCopy[0],
+                kokkosCallback
+            );
+        } else {
+            Kokkos::parallel_for(
+                "LinearAlgebra::Matrix::iterateElements",
+                Kokkos::MDRangePolicy<Kokkos::Rank<Dimensions>>(
+                    {0, 0},
+                    {shapeCopy[0], shapeCopy[1]}
+                ),
+                kokkosCallback
+            );
+        }
     }
 
     template<std::size_t Dimensions, typename MatrixType>
     template<typename KokkosFunction>
     void Matrix<Dimensions, MatrixType>::fill(const KokkosFunction fillFunction) {
-        this->iterateElements(
-            KOKKOS_LAMBDA(const auto... indices) {
-                mCopy(indices...) = fillFunction(indices...);
-            }
+        auto mCopy = this->m;
+
+        if constexpr (Dimensions == 1) {
+            this->iterateElements(
+                LAMBDA(const int i) {
+                    mCopy(i) = fillFunction(i);
+                }
+            );
+        } else {
+            this->iterateElements(
+                LAMBDA(const int i, const int j) {
+                    mCopy(i, j) = fillFunction(i, j);
+                }
+            );
+        }
+    }
+
+    template<std::size_t Dimensions, typename MatrixType>
+    Matrix<Dimensions, MatrixType> Matrix<Dimensions, MatrixType>::operator+(const Matrix& otherMatrix) const {
+        if (this->shape != otherMatrix.shape) {
+            throw std::runtime_error("The shape of both matrices should be the same.");
+        }
+
+        return Matrix(
+            applyMathsOperation<Dimensions, MatrixType, Add>(this->m, otherMatrix.getM())
+        );
+    }
+
+    template<std::size_t Dimensions, typename MatrixType>
+    Matrix<Dimensions, MatrixType> Matrix<Dimensions, MatrixType>::operator+(const MatrixType scalar) const {
+        return Matrix(
+            applyMathsOperation<Dimensions, MatrixType, Add>(this->m, scalar)
+        );
+    }
+
+    template<std::size_t Dimensions, typename MatrixType>
+    Matrix<Dimensions, MatrixType> Matrix<Dimensions, MatrixType>::operator-(const Matrix& otherMatrix) const {
+        if (this->shape != otherMatrix.shape) {
+            throw std::runtime_error("The shape of both matrices should be the same.");
+        }
+
+        return Matrix(
+            applyMathsOperation<Dimensions, MatrixType, Subtract>(this->m, otherMatrix.getM())
+        );
+    }
+
+    template<std::size_t Dimensions, typename MatrixType>
+    Matrix<Dimensions, MatrixType> Matrix<Dimensions, MatrixType>::operator-(const MatrixType scalar) const {
+        return Matrix(
+            applyMathsOperation<Dimensions, MatrixType, Subtract>(this->m, scalar)
+        );
+    }
+
+    template<std::size_t Dimensions, typename MatrixType>
+    Matrix<Dimensions, MatrixType> Matrix<Dimensions, MatrixType>::operator*(MatrixType scalar) const {
+        return Matrix(
+            applyMathsOperation<Dimensions, MatrixType, Multiply>(this->m, scalar)
+        );
+    }
+
+    template<std::size_t Dimensions, typename MatrixType>
+    Matrix<Dimensions, MatrixType> Matrix<Dimensions, MatrixType>::operator/(const Matrix<1, MatrixType>& otherMatrix) const {
+        static_assert(Dimensions == 1, "The dimensions of the matrix should be 1");
+
+        if (this->shape != otherMatrix.shape) {
+            throw std::runtime_error("The shape of both matrices should be the same.");
+        }
+
+        return Matrix(
+            applyMathsOperation<Dimensions, MatrixType, Divide>(this->m, otherMatrix.getM())
+        );
+    }
+
+    template<std::size_t Dimensions, typename MatrixType>
+    Matrix<Dimensions, MatrixType> Matrix<Dimensions, MatrixType>::operator/(const MatrixType scalar) const {
+        return Matrix(
+            applyMathsOperation<Dimensions, MatrixType, Divide>(this->m, scalar)
+        );
+    }
+
+    template <std::size_t Dimensions, typename MatrixType>
+    Matrix<Dimensions, MatrixType> operator+(const MatrixType scalar, const Matrix<Dimensions, MatrixType>& matrix) {
+        return matrix + scalar;
+    }
+
+    template <std::size_t Dimensions, typename MatrixType>
+    Matrix<Dimensions, MatrixType> operator-(const MatrixType scalar, const Matrix<Dimensions, MatrixType>& matrix) {
+        return Matrix(
+            applyMathsOperation<Dimensions, MatrixType, Subtract>(scalar, matrix)
+        );
+    }
+
+    template <std::size_t Dimensions, typename MatrixType>
+    Matrix<Dimensions, MatrixType> operator*(const MatrixType scalar, const Matrix<Dimensions, MatrixType>& matrix) {
+        return matrix * scalar;
+    }
+
+    template <std::size_t Dimensions, typename MatrixType>
+    Matrix<Dimensions, MatrixType> operator/(const MatrixType scalar, const Matrix<Dimensions, MatrixType>& matrix) {
+        return Matrix(
+            applyMathsOperation<Dimensions, MatrixType, Divide>(scalar, matrix)
         );
     }
 }
