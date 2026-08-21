@@ -3,7 +3,6 @@
 
 #include "Matrix.hpp"
 
-#include <array>
 #include <type_traits>
 
 #include "../Macros.hpp"
@@ -133,6 +132,45 @@ namespace LinearAlgebra {
         return Matrix(
             applyMathsOperation<MatrixType, Subtract>(this->m, scalar)
         );
+    }
+
+    template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2>
+    template<std::size_t OtherDimension2>
+    Matrix<MatrixType, Dimension1, OtherDimension2> Matrix<MatrixType, Dimension1, Dimension2>::operator*(const Matrix<MatrixType, Dimension2, OtherDimension2>& otherMatrix) const {
+        auto mCopy = this->m;
+        auto otherM = otherMatrix.getM();
+
+        KokkosView<MatrixType> result("LinearAlgebra::Matrix::operator*::result", Dimension1, OtherDimension2);
+
+        Kokkos::parallel_for(
+            "LinearAlgebra::Matrix::operator*::parallel_for",
+            Kokkos::TeamPolicy(Dimension1 * OtherDimension2, Kokkos::AUTO),
+            LAMBDA(const Kokkos::TeamPolicy<>::member_type& team) {
+                const std::size_t index = team.league_rank();
+
+                const std::size_t rowIndex = index / OtherDimension2;
+                const std::size_t colIndex = index % OtherDimension2;
+
+                MatrixType sum = 0;
+
+                Kokkos::parallel_reduce(
+                    Kokkos::TeamThreadRange(team, Dimension2),
+                    [&](const std::size_t i, MatrixType& localSum) {
+                        localSum += mCopy(rowIndex, i) * otherM(i, colIndex);
+                    },
+                    sum
+                );
+
+                Kokkos::single(
+                    Kokkos::PerTeam(team),
+                    [&] {
+                        result(rowIndex, colIndex) = sum;
+                    }
+                );
+            }
+        );
+
+        return Matrix<MatrixType, Dimension1, OtherDimension2>(result);
     }
 
     template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2>
