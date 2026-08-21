@@ -3,7 +3,7 @@
 
 #include <type_traits>
 
-#include "Settings.hpp"
+#include "../Settings.hpp"
 
 namespace LinearAlgebra {
     struct Add {};

@@ -6,7 +6,7 @@
 
 #include <Kokkos_Core.hpp>
 
-#include "LinearAlgebra/MathOperation.hpp"
+#include "MathOperation.hpp"
 #include "LinearAlgebra/Settings.hpp"
 
 namespace LinearAlgebra {

@@ -6,7 +6,7 @@
 #include <type_traits>
 
 #include "../Macros.hpp"
-#include "LinearAlgebra/MathOperation.hpp"
+#include "MathOperation.hpp"
 
 namespace LinearAlgebra {
     template <
