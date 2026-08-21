@@ -3,6 +3,8 @@
 
 #include <type_traits>
 
+#include "Settings.hpp"
+
 namespace LinearAlgebra {
     struct Add {};
     struct Subtract {};
@@ -33,7 +35,6 @@ namespace LinearAlgebra {
     };
 
     template<
-        std::size_t Dimensions,
         typename MatrixType,
         ValidMathOperation Operation,
         typename OperandType1,
@@ -44,20 +45,7 @@ namespace LinearAlgebra {
         using CleanOperandType2 = std::remove_cvref_t<OperandType2>;
 
         KOKKOS_FUNCTION
-        MatrixType operator()(OperandType1 op1, OperandType2 op2, const int i) const requires (Dimensions == 1) {
-            MathOperation<MatrixType, Operation> operation;
-
-            if constexpr (std::is_same_v<CleanOperandType1, MatrixType>) {
-                return operation(op1, op2(i));
-            } else if constexpr (std::is_same_v<CleanOperandType2, MatrixType>) {
-                return operation(op1(i), op2);
-            } else {
-                return operation(op1(i), op2(i));
-            }
-        }
-
-        KOKKOS_FUNCTION
-        MatrixType operator()(OperandType1 op1, OperandType2 op2, const int i, const int j) const requires (Dimensions == 2) {
+        MatrixType operator()(OperandType1 op1, OperandType2 op2, const int i, const int j) const requires (MAX_DIMENSIONS == 2){
             MathOperation<MatrixType, Operation> operation;
 
             if constexpr (std::is_same_v<CleanOperandType1, MatrixType>) {

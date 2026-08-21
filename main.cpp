@@ -4,8 +4,8 @@
 
 BEGIN_PROGRAM
 
-    LinearAlgebra::Matrix<2, float> matrix1(4, 3);
-    LinearAlgebra::Matrix<2, float> matrix2(4, 3);
+    LinearAlgebra::Matrix<float, 4, 5> matrix1;
+    LinearAlgebra::Matrix<float, 4, 5> matrix2;
 
     matrix1.fill(
         LAMBDA(const int i, const int j) {
@@ -27,7 +27,7 @@ BEGIN_PROGRAM
     std::cout << (matrix1 * 2.0f - 2.0f * matrix1).toString() << std::endl;
     std::cout << (matrix1 / 2.0f - 2.0f / matrix1).toString() << std::endl;
 
-    //std::cout << (matrix1 + matrix2).toString() << std::endl;
-    //std::cout << (matrix1 - matrix2).toString() << std::endl;
+    std::cout << (matrix1 + matrix2).toString() << std::endl;
+    std::cout << (matrix1 - matrix2).toString() << std::endl;
 
 END_PROGRAM

@@ -7,6 +7,7 @@
 #include <Kokkos_Core.hpp>
 
 #include "LinearAlgebra/MathOperation.hpp"
+#include "LinearAlgebra/Settings.hpp"
 
 namespace LinearAlgebra {
     template <typename T, std::size_t N>
@@ -22,37 +23,29 @@ namespace LinearAlgebra {
     template <typename T, std::size_t N>
     using AddPointers_t = AddPointers<T, N>::type;
 
-    template <std::size_t Dimensions, typename MatrixType>
-    using KokkosView = Kokkos::View<AddPointers_t<MatrixType, Dimensions>>;
+    template <typename MatrixType>
+    using KokkosView = Kokkos::View<AddPointers_t<MatrixType, MAX_DIMENSIONS>>;
 
     template <
-        std::size_t Dimensions,
         typename MatrixType,
         ValidMathOperation Operation,
         typename OperandType1,
         typename OperandType2
     >
-    KokkosView<Dimensions, MatrixType> applyMathsOperation(OperandType1 op1, OperandType2 op2);
+    KokkosView<MatrixType> applyMathsOperation(OperandType1 op1, OperandType2 op2);
 
-    template <std::size_t Dimensions, typename MatrixType>
+    template <typename MatrixType, std::size_t Dimension1, std::size_t Dimension2 = 1>
     class Matrix {
-        static_assert(
-            Dimensions == 1 || Dimensions == 2,
-            "Dimensions must be 1 or 2."
-        );
-
-        using MatrixTypePointer = AddPointers_t<MatrixType, Dimensions>;
+        using MatrixTypePointer = AddPointers_t<MatrixType, MAX_DIMENSIONS>;
         
-        KokkosView<Dimensions, MatrixType> m;
-        std::array<std::size_t, Dimensions> shape;
+        KokkosView<MatrixType> m;
 
         public:
-        explicit Matrix(KokkosView<Dimensions, MatrixType> matrixView);
+        explicit Matrix(KokkosView<MatrixType> matrixView);
 
-        template<typename... Shape>
-        explicit Matrix(Shape... shape);
+        explicit Matrix();
 
-        KokkosView<Dimensions, MatrixType> getM() const;
+        KokkosView<MatrixType> getM() const;
 
         [[nodiscard]] std::string toString() const;
 
@@ -70,27 +63,27 @@ namespace LinearAlgebra {
 
         Matrix operator-(MatrixType scalar) const;
 
-        template <std::size_t OtherDimensions>
-        auto operator*(const Matrix<OtherDimensions, MatrixType>& otherMatrix) const;
+        //auto operator*(const Matrix<MAX_DIMENSIONS, MatrixType>& otherMatrix) const;
 
         Matrix operator*(MatrixType scalar) const;
 
-        Matrix operator/(const Matrix<1, MatrixType>& otherMatrix) const;
+        Matrix operator/(const Matrix<MatrixType, Dimension1>& otherMatrix) const;
 
         Matrix operator/(MatrixType scalar) const;
     };
 
-    template <std::size_t Dimensions, typename MatrixType>
-    Matrix<Dimensions, MatrixType> operator+(MatrixType scalar, const Matrix<Dimensions, MatrixType>& matrix);
+    template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2>
+    Matrix<MatrixType, Dimension1, Dimension2> operator+(MatrixType scalar, const Matrix<MatrixType, Dimension1, Dimension2>& matrix);
 
-    template <std::size_t Dimensions, typename MatrixType>
-    Matrix<Dimensions, MatrixType> operator-(MatrixType scalar, const Matrix<Dimensions, MatrixType>& matrix);
+    template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2>
+    Matrix<MatrixType, Dimension1, Dimension2> operator-(MatrixType scalar, const Matrix<MatrixType, Dimension1, Dimension2>& matrix);
 
-    template <std::size_t Dimensions, typename MatrixType>
-    Matrix<Dimensions, MatrixType> operator*(MatrixType scalar, const Matrix<Dimensions, MatrixType>& matrix);
+    template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2>
+    Matrix<MatrixType, Dimension1, Dimension2> operator*(MatrixType scalar, const Matrix<MatrixType, Dimension1, Dimension2>& matrix);
 
-    template <std::size_t Dimensions, typename MatrixType>
-    Matrix<Dimensions, MatrixType> operator/(MatrixType scalar, const Matrix<Dimensions, MatrixType>& matrix);
+    template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2>
+    Matrix<MatrixType, Dimension1, Dimension2> operator/(MatrixType scalar, const Matrix<MatrixType, Dimension1, Dimension2>& matrix);
+
 }
 
 #include "Matrix.tpp"
