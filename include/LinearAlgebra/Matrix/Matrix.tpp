@@ -4,7 +4,7 @@
 #include "Matrix.hpp"
 
 #include <array>
-#include <utility>
+#include <type_traits>
 
 #include "../Macros.hpp"
 #include "LinearAlgebra/MathOperation.hpp"
@@ -21,7 +21,7 @@ namespace LinearAlgebra {
         OperationApplier<Dimensions, MatrixType, Operation, OperandType1, OperandType2> operationApplier;
         KokkosView<Dimensions, MatrixType> matrix;
 
-        if constexpr (std::is_same_v<OperandType1, KokkosView<Dimensions, MatrixType>>) {
+        if constexpr (std::is_same_v<std::remove_cvref_t<OperandType1>, KokkosView<Dimensions, MatrixType>>) {
             matrix = op1;
         } else {
             matrix = op2;
@@ -58,7 +58,7 @@ namespace LinearAlgebra {
     }
 
     template<std::size_t Dimensions, typename MatrixType>
-    Matrix<Dimensions, MatrixType>::Matrix(Kokkos::View<MatrixTypePointer> matrixView): m(matrixView) {
+    Matrix<Dimensions, MatrixType>::Matrix(KokkosView<Dimensions, MatrixType> matrixView): m(matrixView) {
         if constexpr (Dimensions == 1) {
             this->shape[0] = matrixView.extent(0);
         } else {
@@ -205,6 +205,10 @@ namespace LinearAlgebra {
     }
 
     template<std::size_t Dimensions, typename MatrixType>
+    template<std::size_t OtherDimensions>
+    auto Matrix<Dimensions, MatrixType>::operator*(const Matrix<OtherDimensions, MatrixType>& otherMatrix) const {}
+
+    template<std::size_t Dimensions, typename MatrixType>
     Matrix<Dimensions, MatrixType> Matrix<Dimensions, MatrixType>::operator/(const Matrix<1, MatrixType>& otherMatrix) const {
         static_assert(Dimensions == 1, "The dimensions of the matrix should be 1");
 
@@ -231,8 +235,8 @@ namespace LinearAlgebra {
 
     template <std::size_t Dimensions, typename MatrixType>
     Matrix<Dimensions, MatrixType> operator-(const MatrixType scalar, const Matrix<Dimensions, MatrixType>& matrix) {
-        return Matrix(
-            applyMathsOperation<Dimensions, MatrixType, Subtract>(scalar, matrix)
+        return Matrix<Dimensions, MatrixType>(
+            applyMathsOperation<Dimensions, MatrixType, Subtract>(scalar, matrix.getM())
         );
     }
 
@@ -243,8 +247,8 @@ namespace LinearAlgebra {
 
     template <std::size_t Dimensions, typename MatrixType>
     Matrix<Dimensions, MatrixType> operator/(const MatrixType scalar, const Matrix<Dimensions, MatrixType>& matrix) {
-        return Matrix(
-            applyMathsOperation<Dimensions, MatrixType, Divide>(scalar, matrix)
+        return Matrix<Dimensions, MatrixType>(
+            applyMathsOperation<Dimensions, MatrixType, Divide>(scalar, matrix.getM())
         );
     }
 }

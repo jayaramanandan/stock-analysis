@@ -1,7 +1,5 @@
 #include <iostream>
 
-#include <Kokkos_Core.hpp>
-
 #include <LinearAlgebra.hpp>
 
 BEGIN_PROGRAM
@@ -24,9 +22,12 @@ BEGIN_PROGRAM
     std::cout << matrix1.toString() << std::endl;
     std::cout << matrix2.toString() << std::endl;
 
-    std::cout << (matrix1 * 2.0f).toString() << std::endl;
+    std::cout << (100.0f - matrix1 + 100.0f - matrix1).toString() << std::endl;
+    std::cout << (100.0f - matrix1).toString() << std::endl;
+    std::cout << (matrix1 * 2.0f - 2.0f * matrix1).toString() << std::endl;
+    std::cout << (matrix1 / 2.0f - 2.0f / matrix1).toString() << std::endl;
 
-    std::cout << (matrix1 + matrix2).toString() << std::endl;
-
+    //std::cout << (matrix1 + matrix2).toString() << std::endl;
+    //std::cout << (matrix1 - matrix2).toString() << std::endl;
 
 END_PROGRAM

@@ -43,8 +43,6 @@ namespace LinearAlgebra {
         using CleanOperandType1 = std::remove_cvref_t<OperandType1>;
         using CleanOperandType2 = std::remove_cvref_t<OperandType2>;
 
-        //static_assert(!std::is_same_v<CleanOperandType1, MatrixType> && !std::is_same_v<CleanOperandType2, MatrixType>, "Both operands cannot be scalars.");
-
         KOKKOS_FUNCTION
         MatrixType operator()(OperandType1 op1, OperandType2 op2, const int i) const requires (Dimensions == 1) {
             MathOperation<MatrixType, Operation> operation;

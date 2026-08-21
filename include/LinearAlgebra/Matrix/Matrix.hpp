@@ -70,7 +70,8 @@ namespace LinearAlgebra {
 
         Matrix operator-(MatrixType scalar) const;
 
-        //Matrix operator*(const Matrix& otherMatrix) const;
+        template <std::size_t OtherDimensions>
+        auto operator*(const Matrix<OtherDimensions, MatrixType>& otherMatrix) const;
 
         Matrix operator*(MatrixType scalar) const;
 
