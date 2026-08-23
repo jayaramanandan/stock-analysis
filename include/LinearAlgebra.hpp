@@ -3,5 +3,6 @@
 
 #include <LinearAlgebra/Macros.hpp>
 #include <LinearAlgebra/Matrix/Matrix.hpp>
+#include <LinearAlgebra/HelperFunctions/HelperFunctions.hpp>
 
 #endif

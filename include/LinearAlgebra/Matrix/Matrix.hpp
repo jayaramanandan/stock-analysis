@@ -45,6 +45,9 @@ namespace LinearAlgebra {
 
         explicit Matrix();
 
+        template <typename KokkosFunction>
+        explicit Matrix(KokkosFunction fillFunction);
+
         KokkosView<MatrixType> getM() const;
 
         [[nodiscard]] std::string toString() const;

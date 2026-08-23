@@ -28,7 +28,7 @@ namespace LinearAlgebra {
         KokkosView<MatrixType> result("LinearAlgebra::Matrix::applyMathsOperation::result", matrix.extent(0), matrix.extent(1));
 
         Kokkos::parallel_for(
-            "LinearAlgebra::Matrix::iterateElements",
+            "LinearAlgebra::Matrix::applyMathsOperation",
             Kokkos::MDRangePolicy<Kokkos::Rank<MAX_DIMENSIONS>>(
                 {0, 0},
                 {matrix.extent(0), matrix.extent(1)}

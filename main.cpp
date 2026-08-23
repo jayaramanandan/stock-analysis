@@ -4,24 +4,10 @@
 
 BEGIN_PROGRAM
 
-    LinearAlgebra::Matrix<float, 4, 3> matrix1;
-    LinearAlgebra::Matrix<float, 3, 4> matrix2;
+    const auto linspaceVals = LinearAlgebra::linspace<-5.0f, 5.0f, 10>();
 
-    matrix1.fill(
-        LAMBDA(const int i, const int j) {
-            return static_cast<float>(i + j);
-        }
-    );
+    std::cout << linspaceVals.toString() << std::endl;
 
-    matrix2.fill(
-        LAMBDA(const int i, const int j) {
-            return static_cast<float>(i);
-        }
-    );
-
-    std::cout << matrix1.toString() << std::endl;
-    std::cout << matrix2.toString() << std::endl;
-
-    std::cout << (matrix1 * matrix2).toString() << std::endl;
+    std::cout << LinearAlgebra::exp(linspaceVals).toString() << std::endl;
 
 END_PROGRAM
