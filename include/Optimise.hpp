@@ -1,8 +1,4 @@
-//
-// Created by jayar on 23/08/2026.
-//
-
 #ifndef STOCK_ANALYSIS_OPTIMISE_HPP
 #define STOCK_ANALYSIS_OPTIMISE_HPP
 
-#endif //STOCK_ANALYSIS_OPTIMISE_HPP
+#endif
