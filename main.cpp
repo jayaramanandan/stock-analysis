@@ -1,13 +1,17 @@
 #include <iostream>
 
 #include <LinearAlgebra.hpp>
+#include <Optimise.hpp>
 
 BEGIN_PROGRAM
 
-    const auto linspaceVals = LinearAlgebra::linspace<-5.0f, 5.0f, 10>();
+    using deriv = Optimise::Derivative<
+        float,
+        0,
+        Optimise::Power<float, 3, Optimise::Variable<float, 0>>
+    >::derivative;
 
-    std::cout << linspaceVals.toString() << std::endl;
-
-    std::cout << LinearAlgebra::exp(linspaceVals).toString() << std::endl;
+    constexpr auto derivative = deriv{};
+    std::cout << derivative(2.0f) << std::endl;
 
 END_PROGRAM
