@@ -47,6 +47,7 @@ namespace Optimise {
     template <typename ValueType, std::size_t VariableIndex, typename X>
     struct Derivative {
     private:
+        KOKKOS_FUNCTION
         static auto getDerivative();
 
     public:

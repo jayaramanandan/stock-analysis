@@ -105,7 +105,7 @@ namespace Optimise {
                 >
             >{};
         } else {
-            throw std::invalid_argument("Invalid Function in Derivative");
+            Kokkos::abort("Invalid Function in Derivative");
         }
     }
 
@@ -120,13 +120,7 @@ namespace Optimise {
     template <LinearAlgebra::ValidMathOperation Op, typename Num1Type, typename Num2Type>
     KOKKOS_FUNCTION
     constexpr auto generalisedElementaryOperation(const Num1Type x, const Num1Type y) {
-        if constexpr (std::is_arithmetic_v<Num1Type>) {
-            return Operation<Num1Type, Op, Constant<Num1Type, x>, Num2Type>{}(x, y);
-        } else if constexpr (std::is_arithmetic_v<Num2Type>) {
-            return Operation<Num1Type, Op, Num1Type, Constant<Num2Type, x>>{}(x, y);
-        } else {
-            return Operation<Num1Type, Op, Num1Type, Num2Type>{}(x, y);
-        }
+        return Operation<Num1Type, Op, Num1Type, Num2Type>{}(x, y);
     }
 
     template <typename Num1Type, typename Num2Type>
