@@ -11,24 +11,33 @@ namespace LinearAlgebra {
     struct Multiply {};
     struct Divide {};
 
+    /*
     template<typename Operation>
     concept ValidMathOperation =
     std::is_same_v<Operation, Add> ||
     std::is_same_v<Operation, Subtract> ||
     std::is_same_v<Operation, Multiply> ||
     std::is_same_v<Operation, Divide>;
+    */
+
+    enum class ValidMathOperation {
+        Add,
+        Subtract,
+        Multiply,
+        Divide
+    };
 
     template<typename MatrixType, ValidMathOperation Operation>
     struct MathOperation {
         KOKKOS_FUNCTION
         MatrixType operator()(MatrixType a, MatrixType b) const {
-            if constexpr (std::is_same_v<Operation, Add>) {
+            if constexpr (Operation == ValidMathOperation::Add) {
                 return a + b;
-            } else if constexpr (std::is_same_v<Operation, Subtract>) {
+            } else if constexpr (Operation == ValidMathOperation::Subtract) {
                 return a - b;
-            } else if constexpr (std::is_same_v<Operation, Multiply>) {
+            } else if constexpr (Operation == ValidMathOperation::Multiply) {
                 return a * b;
-            } else if constexpr (std::is_same_v<Operation, Divide>) {
+            } else if constexpr (Operation == ValidMathOperation::Divide) {
                 return a / b;
             }
         }

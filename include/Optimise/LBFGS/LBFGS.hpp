@@ -4,6 +4,9 @@
 #include <LinearAlgebra.hpp>
 
 namespace Optimise {
+    template <typename NumericalType, std::size_t ParametersLength, typename ObjectiveFunction>
+    LinearAlgebra::Matrix<NumericalType, ParametersLength> getGradientCompileTime(LinearAlgebra::Matrix<NumericalType, ParametersLength>& x, ObjectiveFunction&& objectiveFunction);
+
     template <typename NumericalType, std::size_t ParametersLength>
     class LBFGS {
         LinearAlgebra::Matrix<NumericalType, ParametersLength> initialParameters;
@@ -12,7 +15,7 @@ namespace Optimise {
         LBFGS(const LinearAlgebra::Matrix<NumericalType, ParametersLength>& initialParameters);
 
         template <typename ObjectiveFunctionType>
-        void optimise(ObjectiveFunctionType objectiveFunction) const;
+        void optimiseCompileTimeExpression(ObjectiveFunctionType objectiveFunction) const;
     };
 }
 

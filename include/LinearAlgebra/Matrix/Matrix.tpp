@@ -48,6 +48,30 @@ namespace LinearAlgebra {
     Matrix<MatrixType, Dimension1, Dimension2>::Matrix(): m("LinearAlgebra::Matrix::m", Dimension1, Dimension2) {}
 
     template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2>
+    Matrix<MatrixType, Dimension1, Dimension2>::Matrix(std::array<MatrixType, Dimension1> matrixArray) requires (Dimension2 == 1) : m("LinearAlgebra::Matrix::m", Dimension1, Dimension2) {
+        auto hostM = Kokkos::create_mirror_view(m);
+
+        for (std::size_t i = 0; i < Dimension1; ++i) {
+            hostM(i, 0) = matrixArray[i];
+        }
+
+        Kokkos::deep_copy(m, hostM);
+    }
+
+    template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2>
+    Matrix<MatrixType, Dimension1, Dimension2>::Matrix(std::array<std::array<MatrixType, Dimension2>, Dimension1> matrixArray) requires (Dimension2 != 1) : m("LinearAlgebra::Matrix::m", Dimension1, Dimension2) {
+        auto hostM = Kokkos::create_mirror_view(m);
+
+        for (std::size_t i = 0; i < Dimension1; ++i) {
+            for (std::size_t j = 0; j < Dimension2; ++j) {
+                hostM(i, j) = matrixArray[i][j];
+            }
+        }
+
+        Kokkos::deep_copy(m, hostM);
+    }
+
+    template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2>
     KokkosView<MatrixType> Matrix<MatrixType, Dimension1, Dimension2>::getM() const {
         return this->m;
     }
@@ -80,9 +104,7 @@ namespace LinearAlgebra {
 
     template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2>
     template <typename KokkosFunction>
-    void Matrix<MatrixType, Dimension1, Dimension2>::iterateElements(const KokkosFunction kokkosCallback) const {
-        auto mCopy = this->m;
-
+    void Matrix<MatrixType, Dimension1, Dimension2>::iterateElements(KokkosFunction kokkosCallback) const {
         Kokkos::parallel_for(
             "LinearAlgebra::Matrix::iterateElements",
             Kokkos::MDRangePolicy(
@@ -95,16 +117,32 @@ namespace LinearAlgebra {
 
     template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2>
     template<typename KokkosFunction>
-    void Matrix<MatrixType, Dimension1, Dimension2>::fill(const KokkosFunction fillFunction) {
+    void Matrix<MatrixType, Dimension1, Dimension2>::fill(KokkosFunction fillFunction) {
         auto mCopy = this->m;
 
-        this->iterateElements(
+        Kokkos::parallel_for(
+            "LinearAlgebra::Matrix::fill",
+            Kokkos::MDRangePolicy(
+                {0, 0},
+                {Dimension1, Dimension2}
+            ),
             LAMBDA(const int i, const int j) {
                 mCopy(i, j) = fillFunction(i, j);
             }
         );
     }
 
+    template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2>
+    KOKKOS_FUNCTION
+    MatrixType Matrix<MatrixType, Dimension1, Dimension2>::operator()(const std::size_t i) const requires (Dimension2 == 1) {
+        return this->m(i, 0);
+    }
+
+    template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2>
+    KOKKOS_FUNCTION
+    MatrixType Matrix<MatrixType, Dimension1, Dimension2>::operator()(const std::size_t i, const std::size_t j) const requires (Dimension2 != 1) {
+        return this->m(i, j);
+    }
 
     template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2>
     Matrix<MatrixType, Dimension1, Dimension2> Matrix<MatrixType, Dimension1, Dimension2>::operator+(const Matrix& otherMatrix) const {

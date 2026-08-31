@@ -48,6 +48,10 @@ namespace LinearAlgebra {
         template <typename KokkosFunction>
         explicit Matrix(KokkosFunction fillFunction);
 
+        Matrix(std::array<MatrixType, Dimension1> matrixArray) requires (Dimension2 == 1);
+
+        Matrix(std::array<std::array<MatrixType, Dimension2>, Dimension1> matrixArray) requires (Dimension2 != 1);
+
         KokkosView<MatrixType> getM() const;
 
         [[nodiscard]] std::string toString() const;
@@ -57,6 +61,12 @@ namespace LinearAlgebra {
 
         template <typename KokkosFunction>
         void fill(KokkosFunction fillFunction);
+
+        KOKKOS_FUNCTION
+        MatrixType operator()(std::size_t i) const requires (Dimension2 == 1);
+
+        KOKKOS_FUNCTION
+        MatrixType operator()(std::size_t i, std::size_t j) const requires (Dimension2 != 1);
 
         Matrix operator+(const Matrix& otherMatrix) const;
 
