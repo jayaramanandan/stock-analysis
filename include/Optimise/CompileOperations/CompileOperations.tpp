@@ -6,19 +6,19 @@
 namespace Optimise {
     template<typename ValueType, auto V, std::size_t ParametersLength>
     KOKKOS_FUNCTION
-    constexpr ValueType Constant<ValueType, V, ParametersLength>::operator()(const LinearAlgebra::Matrix<ValueType, ParametersLength>&) const {
+    constexpr ValueType Constant<ValueType, V, ParametersLength>::operator()(const LinearAlgebra::KokkosView<ValueType>) const {
         return value;
     }
 
     template<typename ValueType, std::size_t Index, std::size_t ParametersLength>
     KOKKOS_FUNCTION
-    constexpr ValueType Variable<ValueType, Index, ParametersLength>::operator()(const LinearAlgebra::Matrix<ValueType, ParametersLength>& x) const {
-        return x(Index);
+    constexpr ValueType Variable<ValueType, Index, ParametersLength>::operator()(const LinearAlgebra::KokkosView<ValueType> x) const {
+        return x(Index, 0);
     }
 
     template<typename ValueType, LinearAlgebra::ValidMathOperation Op, typename Num1, typename Num2, std::size_t ParametersLength>
     KOKKOS_FUNCTION
-    ValueType Operation<ValueType, Op, Num1, Num2, ParametersLength>::operator()(const LinearAlgebra::Matrix<ValueType, ParametersLength>& x) const {
+    ValueType Operation<ValueType, Op, Num1, Num2, ParametersLength>::operator()(const LinearAlgebra::KokkosView<ValueType> x) const {
         const Num1 x1{};
         const Num2 x2{};
 
@@ -29,13 +29,13 @@ namespace Optimise {
 
     template<typename ValueType, std::size_t P, typename Num, std::size_t ParametersLength>
     KOKKOS_FUNCTION
-    ValueType Power<ValueType, P, Num, ParametersLength>::operator()(const LinearAlgebra::Matrix<ValueType, ParametersLength>& x) const {
+    ValueType Power<ValueType, P, Num, ParametersLength>::operator()(const LinearAlgebra::KokkosView<ValueType> x) const {
         return Kokkos::pow(Num{}(x), p);
     }
 
     template<typename ValueType, std::size_t VariableIndex, typename X, std::size_t ParametersLength>
     KOKKOS_FUNCTION
-    auto Derivative<ValueType, VariableIndex, X, ParametersLength>::getDerivative() {
+    constexpr auto Derivative<ValueType, VariableIndex, X, ParametersLength>::getDerivative() {
         if constexpr (requires { typename X::variable; }) {
             if constexpr (X::index == VariableIndex) {
                 return Constant<ValueType, static_cast<ValueType>(1), ParametersLength>{};
@@ -45,15 +45,15 @@ namespace Optimise {
         } else if constexpr (requires { typename X::constant; }) {
             return Constant<ValueType, static_cast<ValueType>(0), ParametersLength>{};
         } else if constexpr (requires { typename X::operation; }) {
-            if constexpr (X::operation == LinearAlgebra::ValidMathOperation::Add || X::operation == LinearAlgebra::ValidMathOperation::Subtract) {
+            if constexpr (X::op == LinearAlgebra::ValidMathOperation::Add || X::op == LinearAlgebra::ValidMathOperation::Subtract) {
                 return Operation<
                     ValueType,
-                    X::operation,
+                    X::op,
                     typename Derivative<ValueType, VariableIndex, typename X::num1, ParametersLength>::derivative,
                     typename Derivative<ValueType, VariableIndex, typename X::num2, ParametersLength>::derivative,
                     ParametersLength
                 >{};
-            } else if constexpr (X::operation == LinearAlgebra::ValidMathOperation::Multiply) {
+            } else if constexpr (X::op == LinearAlgebra::ValidMathOperation::Multiply) {
                 return Operation<
                     ValueType,
                     LinearAlgebra::ValidMathOperation::Add,
@@ -73,7 +73,7 @@ namespace Optimise {
                     >,
                     ParametersLength
                 >{};
-            } else if constexpr (X::operation == LinearAlgebra::ValidMathOperation::Divide) {
+            } else if constexpr (X::op == LinearAlgebra::ValidMathOperation::Divide) {
                 return Operation<
                     ValueType,
                     LinearAlgebra::ValidMathOperation::Divide,
@@ -115,13 +115,13 @@ namespace Optimise {
                 ParametersLength
             >{};
         } else {
-            Kokkos::abort("Invalid Function in Derivative");
+            Kokkos::abort("Invalid operation");
         }
     }
 
     template<typename ValueType, std::size_t VariableIndex, typename X, std::size_t ParametersLength>
     KOKKOS_FUNCTION
-    ValueType Derivative<ValueType, VariableIndex, X, ParametersLength>::operator()(const LinearAlgebra::Matrix<ValueType, ParametersLength>& x) const {
+    ValueType Derivative<ValueType, VariableIndex, X, ParametersLength>::operator()(const LinearAlgebra::KokkosView<ValueType> x) const {
         return derivative{}(x);
     }
 }

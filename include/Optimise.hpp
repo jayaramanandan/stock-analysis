@@ -1,6 +1,6 @@
 #ifndef STOCK_ANALYSIS_OPTIMISE_HPP
 #define STOCK_ANALYSIS_OPTIMISE_HPP
 
-//#include "Optimise/CompileOperations/CompileOperations.hpp"
+#include "Optimise/CompileOperations/CompileOperations.hpp"
 
 #endif
