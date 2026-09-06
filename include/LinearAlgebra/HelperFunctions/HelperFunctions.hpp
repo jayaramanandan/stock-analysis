@@ -3,18 +3,31 @@
 
 #include <cmath>
 
-#include "LinearAlgebra/Matrix/Matrix.hpp"
+#include <Kokkos_MathematicalFunctions.hpp>
+
+#include "../Matrix/Matrix.hpp"
+
+#define DEFINE_FUNCTION(name) \
+    struct name { \
+        template <typename MatrixType> \
+        KOKKOS_FUNCTION \
+        auto operator()(MatrixType x) const {\
+            return Kokkos::name(x); \
+        } \
+    };
 
 namespace LinearAlgebra {
     template <typename T, typename... Ts>
     concept SameType = (std::is_same_v<T, Ts>&& ...);
 
+    template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2, typename KokkosMathsFunction>
+    Matrix<MatrixType, Dimension1, Dimension2> indexFill(KokkosMathsFunction function);
+
+    template<typename MathsFunction, typename MatrixType, std::size_t Dimension1, std::size_t Dimension2>
+    Matrix<MatrixType, Dimension1, Dimension2> applyFunction(Matrix<MatrixType, Dimension1, Dimension2>&& matrix);
+
     template <auto Start, auto Stop, auto Step>
-    constexpr std::size_t calculateLength() {
-        return static_cast<std::size_t>(
-            std::ceil((Stop - Start) / Step)
-        );
-    }
+    constexpr std::size_t calculateLength();
 
     template <auto Start, auto Stop, std::size_t Length>
     Matrix<decltype(Start), Length> linspace();
@@ -22,12 +35,11 @@ namespace LinearAlgebra {
     template <auto Start, auto Stop, auto Step>
     Matrix<decltype(Start), calculateLength<Start, Stop, Step>()> arange();
 
-    template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2, typename KokkosMathsFunction>
-    Matrix<MatrixType, Dimension1, Dimension2> applyFunction(const Matrix<MatrixType, Dimension1, Dimension2>& matrix, KokkosMathsFunction function);
-
-    template<typename MatrixType, std::size_t Dimension1, std::size_t Dimension2>
-    Matrix<MatrixType, Dimension1, Dimension2> exp(const Matrix<MatrixType, Dimension1, Dimension2>& matrix);
-
+    DEFINE_FUNCTION(exp)
+    DEFINE_FUNCTION(log)
+    DEFINE_FUNCTION(sqrt)
+    DEFINE_FUNCTION(sin)
+    DEFINE_FUNCTION(cos)
 }
 
 #include "HelperFunctions.tpp"

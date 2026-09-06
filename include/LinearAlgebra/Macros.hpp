@@ -17,6 +17,4 @@ return 0; \
 
 // Aliases
 
-#define LAMBDA KOKKOS_LAMBDA
-
 #endif

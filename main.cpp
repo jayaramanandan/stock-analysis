@@ -4,18 +4,12 @@
 #include <Optimise.hpp>
 
 BEGIN_PROGRAM
-    constexpr std::size_t parametersLength = 2;
+    const auto mat2 = LinearAlgebra::linspace<5.0f, 10.0f, 5>();
+    const auto mat1 = LinearAlgebra::applyFunction<LinearAlgebra::log>(LinearAlgebra::Matrix<float, 5, 5>() + 1.0f);
 
-    using deriv = Optimise::Derivative<
-        float,
-        0,
-        Optimise::Power<float, 3, Optimise::Variable<float, 0, parametersLength>, parametersLength>,
-        parametersLength
-    >::derivative;
+    std::cout << LinearAlgebra::matrixToString(mat1) << std::endl;
 
-    constexpr auto derivative = deriv{};
+    std::cout << LinearAlgebra::matrixToString(mat2) << std::endl;
 
-    const LinearAlgebra::Matrix x = std::array{0.0f, 0.0f};
-    std::cout << derivative(x) << std::endl;
-
+    std::cout << LinearAlgebra::matrixToString(mat1 * mat2) << std::endl;
 END_PROGRAM

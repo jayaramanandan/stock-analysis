@@ -2,7 +2,8 @@
 #define STOCK_ANALYSIS_LINEAR_ALGEBRA_HPP
 
 #include "LinearAlgebra/Macros.hpp"
-#include "LinearAlgebra//Matrix/Matrix.hpp"
+#include "LinearAlgebra/Matrix/Matrix.hpp"
+#include "LinearAlgebra/ElementaryOperations/ElementaryOperations.hpp"
 #include "LinearAlgebra/HelperFunctions/HelperFunctions.hpp"
 
 #endif
